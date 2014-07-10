@@ -1,41 +1,66 @@
 # == Class: mailclient
 #
-# Full description of class mailclient here.
+# This class configures a system as a mail client, that is a machine
+# where no mail is stored locally, and all mail is forwarded to some
+# other server.
 #
 # === Parameters
 #
-# Document parameters here.
+# [relayhost]
+#   SMTP server to relay mail via, see postconf(5) man page for more info.
 #
-# [*sample_parameter*]
-#   Explanation of what this parameter affects and what it defaults to.
-#   e.g. "Specify one or more upstream ntp servers as an array."
-#
-# === Variables
-#
-# Here you should define a list of variables that this module would require.
-#
-# [*sample_variable*]
-#   Explanation of how this variable affects the funtion of this class and if it
-#   has a default. e.g. "The parameter enc_ntp_servers must be set by the
-#   External Node Classifier as a comma separated list of hostnames." (Note,
-#   global variables should not be used in preference to class parameters  as of
-#   Puppet 2.6.)
+# [mydomain]
+#   Domain name for system, see postconf(5) man page.
 #
 # === Examples
 #
 #  class { mailclient:
-#    servers => [ 'pool.ntp.org', 'ntp.local.company.com' ]
+#    relayhost => 'smtp.example.com',
+#    mydomain  => 'example.com'
 #  }
 #
 # === Authors
 #
-# Author Name <author@domain.com>
+# Janne Blomqvist <janne.blomqvist@aalto.fi>
 #
 # === Copyright
 #
-# Copyright 2011 Your name here, unless otherwise noted.
+# Copyright 2014 Janne Blomqvist
 #
 class mailclient {
 
+  case $::osfamily {
+    'Debian': {
+      package { "mailutils": ensure => purged }
+      package { "heirloom-mailx": ensure => installed }
+      package { "postfix": ensure => purged }
+      package { "exim4-base": ensure => purged }
 
+      file { "/etc/nail.rc":
+        mode     => 0644,
+        owner    => root,
+        group    => root,
+        require  => Package["heirloom-mailx"],
+        content  => template('mailclient/nail.rc.erb')
+      }
+    }
+    
+    'RedHat': {
+      package { "postfix": ensure => installed }
+
+      file { "/etc/postfix/main.cf":
+        mode    => 0644,
+        owner   => root,
+        group   => root,
+        content => template('mailclient/main.cf.erb'),
+        require => Package["postfix"],
+      }
+
+      service { 'postfix':
+        ensure    => running,
+        enable    => true,
+        subscribe => File["/etc/postfix/main.cf"],
+      }
+
+    }
 }
