@@ -27,7 +27,10 @@
 #
 # Copyright 2014 Janne Blomqvist
 #
-class mailclient {
+class mailclient (
+  $relayhost = undef,
+  $mydomain  = undef
+  ) {
 
   case $::osfamily {
     'Debian': {
