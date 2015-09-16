@@ -6,6 +6,15 @@ sure there is no mail server installed, and configures heirloom-mailx
 to forward via a chosen server. On EL6, it configures postfix in a
 "null client" mode.
 
+Example configuration using hiera
+---------------------------------
+
+When using hiera, the module can be configured with
+
+    mailclient::relayhost: 'smtp.example.com'
+    mailclient::mydomain: 'example.com'
+
+
 License
 -------
 
